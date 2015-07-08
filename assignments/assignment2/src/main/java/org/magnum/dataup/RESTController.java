@@ -12,6 +12,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.magnum.dataup.model.Video;
+import org.magnum.dataup.model.VideoStatus;
 import org.magnum.dataup.model.VideoStatus.VideoState;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -44,24 +45,26 @@ public class RESTController {
 
 
 	@RequestMapping(value="/video/{id}/data", method=RequestMethod.POST)
-	public @ResponseBody VideoState uploadVideo(@PathVariable("id") String id,@RequestParam("data") MultipartFile file, HttpServletResponse response){
+	public @ResponseBody VideoStatus uploadVideo(@PathVariable("id") String id,@RequestParam("data") MultipartFile file, HttpServletResponse response){
 		try {
 			VideoFileManager manager = VideoFileManager.get();
 			Video video = getVideoById(id);
 			if(video==null)
-				throw new Exception("Video Metadata not found");
+				throw new Exception("Video Metadata not found"); // video has not been uploaded yet
 			manager.saveVideoData(video, file.getInputStream());
 			
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			response.setStatus(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
 			e.printStackTrace();
+			return null;
 		} catch(Exception ex){
 			response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+			return null;
 		}
 		
 		System.out.println("inside upload");
-		return VideoState.READY;
+		System.out.println(response.toString());
+		return new VideoStatus(VideoState.READY);
 	}
 	
 	@RequestMapping(value="/video/{id}/data", method=RequestMethod.GET)
@@ -84,12 +87,22 @@ public class RESTController {
 			response.setStatus(HttpServletResponse.SC_NOT_FOUND);
 		}
 	}
+	/**
+	 * Randomly generate a {@link Long} value for id.
+	 * @param video
+	 * @return
+	 */
 	
 	private long generateRandomId(Video video){
 		Date date = new Date();
 		return date.getTime();
 	}
-	
+	/**
+	 * Return the dataURL for the {@link Video} object
+	 * @param video
+	 * @param request
+	 * @return
+	 */
 	private String generateDataUrl(Video video, HttpServletRequest request) {
 		String base = 
 	              "http://"+request.getServerName() 
@@ -97,6 +110,12 @@ public class RESTController {
 		String url = base + "/video/" + video.getId() + "/data"; 
 		return url;
 	}
+	/**
+	 * returns the {@link Video} object associated with the id.
+	 * @param id
+	 * @return
+	 */
+	
 	private Video getVideoById(String id) {
 		Video video = null;
 		Long videoId = Long.parseLong(id);
