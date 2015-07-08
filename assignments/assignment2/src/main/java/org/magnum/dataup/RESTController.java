@@ -19,10 +19,10 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 @Controller
 public class RESTController {
-	Map<Long,Video> videos = new HashMap<Long,Video>();
+	List<Video> videos = new ArrayList<Video>();
 	
 	@RequestMapping(value="/video",method=RequestMethod.GET)
-	public @ResponseBody Map<Long,Video> fetchVideoMetaData(){
+	public @ResponseBody List<Video> fetchVideoMetaData(){
 		System.out.println("Inside addVideoMetadata() Handler method");
 		return videos;
 	}
@@ -33,7 +33,7 @@ public class RESTController {
 		video.setId(generateRandomId(video));
 		// generate data url
 		video.setDataUrl(generateDataUrl(video,request));
-		videos.put(video.getId(),video);
+		videos.add(video);
 		return video;
 	}
 
